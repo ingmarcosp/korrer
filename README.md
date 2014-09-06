@@ -4,4 +4,4 @@ USING
 
 to launch Korrer:
 
-~> python runner.py
+    ~> python runner.py
