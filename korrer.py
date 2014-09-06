@@ -69,7 +69,7 @@ ritmo_seg=ritmo-float(ritmo_sd)                                #decimales del ri
 minuaseg=ritmo_seg*60                                          #decimales del ritmo de minutos a segundos
 
 print""
-print "El Ritmo de carrera fue de:",ritmo_sd,":",minuaseg,"min/km"
+print "El Ritmo de carrera fue de: ",ritmo_sd,":",minuaseg,"min/km"
 
 #escribir en un archivo
 
