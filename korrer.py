@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 print ""
 print "Korrer, un programa que facilita el calculo y registro de tiempos de",
 print " carreras o entrenamientos_"

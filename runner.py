@@ -9,6 +9,7 @@ import datetime
 import csv
 import fileinput
 from time import sleep
+from gpx import *
 import readline
 profiles_folder = "profiles/"
 
@@ -68,7 +69,7 @@ class Runner(object):
 class Activity(object):
     def __init__(self, runner, date, typerun, distance, time):
         self.runner = runner
-        self.line = None
+#        self.line = None
         self.date = date
         self.typerun = typerun
         self.distance = distance
@@ -411,6 +412,60 @@ def timeInput():
     return time
 
 
+def newGpxActivity(runner, activities):
+    gpxfiles = readgpxfiles()
+    if len(gpxfiles) == 0:
+        print "You must copy your gpx files in the folder 'gpxfiles/'"
+        return activities
+    print "GPX Files"
+    print ""
+    for gfile in gpxfiles:
+        # cut of the "gpxfiles/" to get the simple file name
+        print "{0:^3} : {1:^3}".format(gpxfiles.index(gfile), 
+                                       gfile.replace("gpxfiles/", ""))
+    while True:
+        try:
+            select_option = int(raw_input("Introduce the number of the file: "))
+            if select_option > len(gpxfiles):
+                print "The Number sould be less than " + str(select_option) 
+                pass
+        except ValueError:
+            print "Just Numbers..."
+            pass
+        break
+
+    gpxactivity = GpxData(gpxfiles[select_option])
+    gpxactivity.gpxParse()
+    gpxactivity.totalDistance()
+    gpxactivity.timeDate()
+    
+    # 0 for miles and 1 for kilometers
+    pref = int(runner[0].getPref())
+    newactivity = Activity(runner, 
+                           gpxactivity.getTInfo("date"), 
+                           "R", 
+                           gpxactivity.getTInfo("tdistance")[pref], 
+                           gpxactivity.getTInfo("ttime"))
+    
+    newactivity.setP_and_AS()
+    writeFile(runner, newactivity)
+    activities.append(newactivity)
+    return activities
+
+
+def writeFile(runner, newactivity):
+    afile = open(runner[-1], "a")
+    afile_csv = csv.writer(afile)
+    afile_csv.writerow([newactivity.getDate(), 
+                        newactivity.getTypeRun(), 
+                        newactivity.getDistance(), 
+                        newactivity.getTime(), 
+                        newactivity.getPace(), 
+                        newactivity.getAverageSpeed()
+                        ])
+    afile.close()
+    return
+
 def newActivity(runner, activities):
     """
     Creates a new activity, append to the end of the file, instances and append
@@ -433,16 +488,7 @@ def newActivity(runner, activities):
         isOkk= raw_input("Is this information is ok? (yes or no): ")
         if isOkk == "yes": 
             newactivity.setP_and_AS()
-            afile = open(runner[-1], "a")
-            afile_csv = csv.writer(afile)
-            afile_csv.writerow([newactivity.getDate(), 
-                                newactivity.getTypeRun(), 
-                                newactivity.getDistance(), 
-                                newactivity.getTime(), 
-                                newactivity.getPace(), 
-                                newactivity.getAverageSpeed()
-                                ])
-            afile.close()
+            writeFile(runner, newactivity)
             break # close the loop
         elif isOkk == "no":
             return newActivity(runner, activities)
@@ -618,19 +664,20 @@ def modRunner(runner):
         else:
             line = line.replace("\n", "")
             print line
-            nline +=1
+            nline += 1
     return
+
 
 def mainAction():
     """
     Start the program, give th welcome and show the options to select or
-    create a new runner. 
+    create a new runner.
     And the action that can do, add, mod or delet activities. at the en exit.
     """
     print """
 Welcome to...
                  KORRER
-                 
+
 An app to keep the tracks of your times in running...
         
     """
@@ -664,11 +711,22 @@ An app to keep the tracks of your times in running...
             print "{0:^3} : {1:^3}".format(options.index(item), item)
 
         selec_option = raw_input("Whats you wants to do? \
-        (option Number): ")
+(option Number): ")
+        print "=" * 15
+        print ""
         if selec_option == "0":
             listActivities(activities_list)
         elif selec_option == "1":
-            activities_list = newActivity(runner, activities_list)
+            while True:
+                print "{0:^3} : {1:^3}".format("0", "Manual Entry")
+                print "{0:^3} : {1:^3}".format("1", "GPX File")
+                selec_option = raw_input("(option Number): ")
+                if selec_option == "0":
+                    activities_list = newActivity(runner, activities_list)
+                    break
+                elif selec_option == "1":
+                    activities_list = newGpxActivity(runner, activities_list)
+                    break
         elif selec_option == "2":
             activities_list = modActivity(runner, activities_list)
         elif selec_option == "3":
