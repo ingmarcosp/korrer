@@ -143,7 +143,7 @@ def newRunner():
         sex = raw_input("Write your sex (male or female): ")
         preference = 2
         while preference > 1:
-            preference = int(raw_input("Write 0 (zero) for 'Pounds and lb' or"\
+            preference = int(raw_input("Write 0 (zero) for 'mi and lb' or"\
                                            + " 1 (one) for 'km and kg': "))
         print "\n"
         return [name, age, weight, sex, str(preference)]
@@ -316,7 +316,6 @@ def showData(runner):
                                    "Fasted Run: " + str(runner[0].getFastedRun()), \
                                    " "*10)
     print ""
-    print ""
     return
 
 
@@ -376,6 +375,7 @@ def listActivities(activities, header=True):
                                                     activity.getPace(), 
                                                     activity.getAverageSpeed()
                                                     )
+            print "{0:^3} : {1:^3}".format("c", "Back to main menu")
     else:
         print "No activities yet..."
     return
@@ -508,48 +508,52 @@ def modActivity(runner, activities):
     data_mod = ["Date", "Type", "Distance", "Time"]
     # loop to ask again if introduces a bad answer
     while True:
-        try:    
-            selec_activity = int(raw_input("Introduce the number of the activity: "
-                                           ))
-        # In case introduce a string
-        except ValueError: 
-            print "Just Numbers from '0' to " + str(len(activities))
-        if selec_activity > len(activities):
-            pass
+        selec_activity = raw_input("Introduce the number of the activity: ")
+        if selec_activity in ["C", "c"]:
+            return activities
         else:
-            actual_data= [activities[selec_activity].getDate(), 
-                          activities[selec_activity].getTypeRun(), 
-                          activities[selec_activity].getDistance(), 
-                          activities[selec_activity].getTime()]
-
-            # Print a list of type data and data
-            for adata in actual_data:
-                index = actual_data.index(adata)
-                print "{0:^5} {1:^5} {2:^5}".format(index, data_mod[index], adata)
-            # loop to ask again if introduces a bad answer
-            while True:
-                selec_data = raw_input("Introduce the number of the data: ")
-                if selec_data == "0":
-                    new_data = raw_input("Introduce the new Date: ")
-                    activities[selec_activity].setDate(new_data)
-                    break
-                elif selec_data == "1":
-                    new_data = raw_input("Introduce the new Type Run: ")
-                    activities[selec_activity].setTypeRun(new_data)
-                    break
-                elif selec_data == "2":
-                    new_data = raw_input("Introduce the new Distance: ")
-                    activities[selec_activity].setDistance(new_data)
-                    activities[selec_activity].setP_and_AS()
-                    break
-                elif selec_data == "3":
-                    time = timeInput()
-                    activities[selec_activity].setTime(time)
-                    activities[selec_activity].setP_and_AS()
-                    break
-        # the next two 'else' it is in case introduce an out of range index
-                else:
-                    print "Just Numbers from '0' to '3'..."
+            try:    
+                int(selec_activity) 
+            # In case introduce a wron string
+            except ValueError: 
+                print "Just Numbers from '0' to " + str(len(activities))
+        
+            if selec_activity > len(activities):
+                pass
+            else:
+                actual_data= [activities[selec_activity].getDate(), 
+                              activities[selec_activity].getTypeRun(), 
+                              activities[selec_activity].getDistance(), 
+                              activities[selec_activity].getTime()]
+    
+                # Print a list of type data and data
+                for adata in actual_data:
+                    index = actual_data.index(adata)
+                    print "{0:^5} {1:^5} {2:^5}".format(index, data_mod[index], adata)
+                # loop to ask again if introduces a bad answer
+                while True:
+                    selec_data = raw_input("Introduce the number of the data: ")
+                    if selec_data == "0":
+                        new_data = raw_input("Introduce the new Date: ")
+                        activities[selec_activity].setDate(new_data)
+                        break
+                    elif selec_data == "1":
+                        new_data = raw_input("Introduce the new Type Run: ")
+                        activities[selec_activity].setTypeRun(new_data)
+                        break
+                    elif selec_data == "2":
+                        new_data = raw_input("Introduce the new Distance: ")
+                        activities[selec_activity].setDistance(new_data)
+                        activities[selec_activity].setP_and_AS()
+                        break
+                    elif selec_data == "3":
+                        time = timeInput()
+                        activities[selec_activity].setTime(time)
+                        activities[selec_activity].setP_and_AS()
+                        break
+            # the next two 'else' it is in case introduce an out of range index
+                    else:
+                        print "Just Numbers from '0' to '3'..."
         break
 
     # write the changes on the file and return the activites list
@@ -562,14 +566,17 @@ def delActivity(runner, activities):
     """
     listActivities(activities)
     while True:
-        try:    
-            selec_activity = int(raw_input("Introduce the number of the activity: "
-                ))
-        except ValueError:  # In case get a string
-            print "Just Numbers from '0' to " + str(len(activities))
-        if selec_activity > len(activities):
-            print "Just Numbers from '0' to " + str(len(activities))
-            pass
+        selec_activity = raw_input("Introduce the number of the activity: ")
+        if selec_activity in ["C", "c"]:
+            return activities
+        else:
+            try:
+                int(selec_activity)
+            except ValueError:  # In case get a string
+                print "Just Numbers from '0' to " + str(len(activities))
+            if selec_activity > len(activities):
+                print "Just Numbers from '0' to " + str(len(activities))
+                pass
         break
     return modFileActivity(runner, activities, selec_activity, todo="delete")
 
@@ -621,7 +628,8 @@ def modRunner(runner):
             runner[0].getPref()]
     
     for item in data:
-        print "{0:^} : {1:^}".format(data.index(item), item)
+        print "{0:^3} : {1:^3}".format(data.index(item), item)
+    print "{0:^3} : {1:^3}".format("c", "Back to main menu")
     while True:
         selec_data = raw_input("Introduce the Number: ")
 
@@ -642,12 +650,16 @@ def modRunner(runner):
             runner[0].setSex(new_data)
             break
         elif selec_data == "4":
-            new_data = raw_input("Introduce the new Preference '0' or '1': ")
-            if new_data != "1" or new_data != "0":
-                    print "Just '0' or '1'"
-                    pass                        
+            while True:
+                new_data = raw_input("Introduce the new Preference '0' or '1': ")
+                if new_data not in ["1", "0"]:
+                        print "Just '0' or '1'"
+                        pass                        
+                break
             runner[0].setPref(new_data)
             break
+        elif selec_data in ["c", "C"]:
+            return
         else:
             print "Just Number from '0' to '4'...\n"
     # Writing the file
@@ -706,6 +718,7 @@ An app to keep the tracks of your times in running...
     while True:
         sleep(1)
         print ""
+        print "=" * 15
         print "{0:^3} : {1:^3}".format("Number Option", "Option")
         for item in options:
             print "{0:^3} : {1:^3}".format(options.index(item), item)
@@ -720,12 +733,15 @@ An app to keep the tracks of your times in running...
             while True:
                 print "{0:^3} : {1:^3}".format("0", "Manual Entry")
                 print "{0:^3} : {1:^3}".format("1", "GPX File")
+                print "{0:^3} : {1:^3}".format("c", "Back to main menu")
                 selec_option = raw_input("(option Number): ")
                 if selec_option == "0":
                     activities_list = newActivity(runner, activities_list)
                     break
                 elif selec_option == "1":
                     activities_list = newGpxActivity(runner, activities_list)
+                    break
+                elif selec_option in ["c", "C"]:
                     break
         elif selec_option == "2":
             activities_list = modActivity(runner, activities_list)
@@ -741,4 +757,7 @@ An app to keep the tracks of your times in running...
     return
 
 if __name__ == '__main__':
-    mainAction()
+    try:
+        mainAction()
+    except (KeyboardInterrupt, SystemExit):
+        pass
