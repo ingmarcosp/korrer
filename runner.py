@@ -10,14 +10,16 @@ import csv
 import fileinput
 from time import sleep
 from gpx import *
-import readline
+# import readline
 profiles_folder = "profiles/"
 
 class Runner(object):
     """
     runner profile
     """
+    #TODO erase all the parameters to add them by an asignation
     def __init__(self, name, age, weight, sex, preference):
+        self.ID = None
         self.name = name
         self.age = age
         self.weight = weight
@@ -27,53 +29,16 @@ class Runner(object):
         self.totaltime = None
         self.totalruns = None
         self.fastedrun = None
-        
-    def getName(self):
-        return self.name
-    def setName(self, new_data):
-        self.name = new_data
-    def setAge(self, new_data):
-        self.age = new_data
-    def setWeight(self, new_data):
-        self.weight = new_data
-    def setSex(self, new_data):
-        self.sex = new_data
-    def setPref(self, new_data):
-        self.pref = new_data
-    def getAge(self):
-        return self.age
-    def getWeight(self):
-        return self.weight
-    def getSex(self):
-        return self.sex
-    def getPref(self):
-        return self.pref
 
-    def setTotalDistance(self, distance):
-        self.totaldistance = distance
-    def getTotalDistance(self):
-        return self.totaldistance
-    def setTotalTime(self, time):
-        self.totaltime = time
-    def getTotalTime(self):
-        return self.totaltime
-    def setTotalRuns(self, runs):
-        self.totalruns = runs
-    def getTotalRuns(self):
-        return self.totalruns
-    def setFastedRun(self, fasted):
-        self.fastedrun = fasted
-    def getFastedRun(self):
-        return self.fastedrun
 
 class Activity(object):
-    def __init__(self, runner, date, typerun, distance, time):
-        self.runner = runner
-#        self.line = None
+    def __init__(self, date, typerun, distance, time,  runner):
+        self.ID = None
         self.date = date
         self.typerun = typerun
         self.distance = distance
         self.time = time
+        self.runner = runner # ID runner
         self.pace = None
         self.average_speed = None
     
@@ -87,37 +52,6 @@ class Activity(object):
         self.pace = round((time.total_seconds() / 60) / float(self.distance), 2)
         self.average_speed = round(float(self.distance) / (time.total_seconds() / 3600), 2)
         
-        
-    def setDate(self, date):
-        self.date = date
-    def setTypeRun(self, typerun):
-        self.typerun = typerun
-    def setDistance(self, distance):
-        self.distance = distance
-    def setTime(self, time):
-        self.time = time
-    def setRunner(self, runner):
-        self.runner = runner
-    def setLine(self, line):
-        self.line = line
-
-    def getDate(self):
-        return self.date
-    def getTypeRun(self):
-        return self.typerun
-    def getDistance(self):
-        return self.distance
-    def getTime(self):
-        return self.time
-    def getLine(self):
-        return self.line
-    def getRunner(self):
-        return self.runner
-    def getPace(self):
-        return self.pace
-    def getAverageSpeed(self):
-        return self.average_speed
-
 
 def readProfiles():
     """ 
@@ -147,7 +81,8 @@ def newRunner():
                                            + " 1 (one) for 'km and kg': "))
         print "\n"
         return [name, age, weight, sex, str(preference)]
-        
+
+    #TODO coment this function, it's no needed any more
     def createFile(name):
         """
         Create a file with the given name
@@ -159,7 +94,7 @@ def newRunner():
         afile.write("Date,Type,Distance,Time,Pace,Speed" + "\n")
         afile.close()
         return
-        
+    #TODO coment this seccion too, 
     profiles_files = readProfiles()
     name = ""
     if len(profiles_files) > 0:
@@ -216,7 +151,7 @@ def selectRunner(profiles):
     # Printing the option
     for option in list_option:
         print "{0:^3} : {1:^3}".format(list_option.index(option) + 1, 
-                                       option[0].getName())
+                                       option[0].name)
     # selection of the number
     while True:
         print "Write the Number of the runner"
@@ -252,15 +187,15 @@ def setExtraInfo(profile):
     afile.close()
 
     #set total runs
-    profile[0].setTotalRuns(len(runs))
+    profile[0].totalruns = len(runs)
     
-    if profile[0].getTotalRuns() > 0:
+    if profile[0].totalruns() > 0:
         ## setting up the extra info in the 
         totaldistance = []
         for run in runs.itervalues():
             totaldistance.append(float(run[2]))
             
-        profile[0].setTotalDistance(sum(totaldistance))
+        profile[0].totaldistance = sum(totaldistance)
     
         ## setting up the total time
         # set totaltime in 0
@@ -276,19 +211,19 @@ def setExtraInfo(profile):
                                                        seconds=time[2])
         # the __str__() is becouse time is in seconds, and in this way 
         # return hh:mm:ss.ms
-        profile[0].setTotalTime(totaltime.__str__())
+        profile[0].totaltime = totaltime.__str__()
         
         ## set fasted run
         speed = 0
         for run in runs.itervalues():
             if float(run[5]) > speed:
-                profile[0].setFastedRun(run[0])
+                profile[0].fastedrun = run[0]
                 speed = run[5]
     else:
-        profile[0].setTotalDistance(0)
-        profile[0].setTotalTime(datetime.timedelta().__str__())
-        profile[0].setTotalRuns(0)
-        profile[0].setFastedRun(0)
+        profile[0].totaldistance = 0
+        profile[0].totaltime = datetime.timedelta().__str__()
+        profile[0].totalruns = 0
+        profile[0].fastedrun = 0
     return
 
 
@@ -299,21 +234,21 @@ def showData(runner):
     
     print '{0:<16} {1:^16} {2:>16}'.format("#" * 12, "Welcome..!", "#" * 12)
     print '{0:<16} {1:^16} {2:>16}'.format("#" * 12, \
-                                           runner[0].getName(), "#" * 12)
+                                           runner[0].name, "#" * 12)
     print ""
     print '{0:<16} {1:^16} {2:>16}'.format(" "*10, "#"*10, " "*10)
     print ""
     print '{0:<16} {1:^16} {2:>16}'.format(\
-                                    ("Age: " + runner[0].getAge()),\
-                                    ("Weight: " + runner[0].getWeight()),\
-                                    ("Sex: " + runner[0].getSex()))
+                                    ("Age: " + runner[0].age),\
+                                    ("Weight: " + runner[0].weight),\
+                                    ("Sex: " + runner[0].sex))
     print '{0:<16} {1:^16} {2:>16}'.format(\
                                     ("Total Distance :" + \
-                                     str(runner[0].getTotalDistance())),\
-                                  ("Total Time: " + str(runner[0].getTotalTime())),\
-                                  ("Total Runs: " + str(runner[0].getTotalRuns())))
+                                     str(runner[0].totaldistance)),\
+                                  ("Total Time: " + str(runner[0].totaltime)),\
+                                  ("Total Runs: " + str(runner[0].totalruns)))
     print '{0:<16} {1:^16} {2:>16}'.format(" "*10, \
-                                   "Fasted Run: " + str(runner[0].getFastedRun()), \
+                                   "Fasted Run: " + str(runner[0].fastedrun), \
                                    " "*10)
     print ""
     return
@@ -368,12 +303,12 @@ def listActivities(activities, header=True):
             activity.setP_and_AS()
             print '{0:^10}|{1:^10}|{2:^10}|{3:^10}|{4:^10}|{5:^10}|{6:^10}'.format(
                                                     activities.index(activity), 
-                                                    activity.getDate(), 
-                                                    activity.getTypeRun(), 
-                                                    activity.getDistance(), 
-                                                    activity.getTime(), 
-                                                    activity.getPace(), 
-                                                    activity.getAverageSpeed()
+                                                    activity.date, 
+                                                    activity.typerun, 
+                                                    activity.distance, 
+                                                    activity.time, 
+                                                    activity.pace, 
+                                                    activity.average_speed()
                                                     )
             print "{0:^3} : {1:^3}".format("c", "Back to main menu")
     else:
@@ -440,7 +375,7 @@ def newGpxActivity(runner, activities):
     gpxactivity.timeDate()
     
     # 0 for miles and 1 for kilometers
-    pref = int(runner[0].getPref())
+    pref = int(runner[0].pref)
     newactivity = Activity(runner, 
                            gpxactivity.getTInfo("date"), 
                            "R", 
@@ -456,12 +391,12 @@ def newGpxActivity(runner, activities):
 def writeFile(runner, newactivity):
     afile = open(runner[-1], "a")
     afile_csv = csv.writer(afile)
-    afile_csv.writerow([newactivity.getDate(), 
-                        newactivity.getTypeRun(), 
-                        newactivity.getDistance(), 
-                        newactivity.getTime(), 
-                        newactivity.getPace(), 
-                        newactivity.getAverageSpeed()
+    afile_csv.writerow([newactivity.date, 
+                        newactivity.typerun, 
+                        newactivity.distance, 
+                        newactivity.time, 
+                        newactivity.pace, 
+                        newactivity.average_speed
                         ])
     afile.close()
     return
@@ -477,7 +412,7 @@ def newActivity(runner, activities):
     distance = raw_input("Introduce the distance: ")
     time = timeInput() #function to input time
     # new instance
-    newactivity = Activity(runner, date, typerun, distance, time)
+    newactivity = Activity(date, typerun, distance, time, runner)
 
     print "{:^}".format("=" * 20)
     listActivities([newactivity])
@@ -521,10 +456,10 @@ def modActivity(runner, activities):
             if selec_activity > len(activities):
                 pass
             else:
-                actual_data= [activities[selec_activity].getDate(), 
-                              activities[selec_activity].getTypeRun(), 
-                              activities[selec_activity].getDistance(), 
-                              activities[selec_activity].getTime()]
+                actual_data= [activities[selec_activity].date, 
+                              activities[selec_activity].typerun, 
+                              activities[selec_activity].distance, 
+                              activities[selec_activity].time]
     
                 # Print a list of type data and data
                 for adata in actual_data:
@@ -535,20 +470,20 @@ def modActivity(runner, activities):
                     selec_data = raw_input("Introduce the number of the data: ")
                     if selec_data == "0":
                         new_data = raw_input("Introduce the new Date: ")
-                        activities[selec_activity].setDate(new_data)
+                        activities[selec_activity].date = new_data
                         break
                     elif selec_data == "1":
                         new_data = raw_input("Introduce the new Type Run: ")
-                        activities[selec_activity].setTypeRun(new_data)
+                        activities[selec_activity].typerun = new_data
                         break
                     elif selec_data == "2":
                         new_data = raw_input("Introduce the new Distance: ")
-                        activities[selec_activity].setDistance(new_data)
+                        activities[selec_activity].distance = new_data
                         activities[selec_activity].setP_and_AS()
                         break
                     elif selec_data == "3":
                         time = timeInput()
-                        activities[selec_activity].setTime(time)
+                        activities[selec_activity].time = time
                         activities[selec_activity].setP_and_AS()
                         break
             # the next two 'else' it is in case introduce an out of range index
@@ -593,12 +528,12 @@ def modFileActivity(runner, activities, selec_activity, todo="mod", ):
     if todo == "mod":
         for line in fileinput.input(runner[-1], inplace=True, mode="rb"):
             if nline == selec_activity + 2:
-                line = activities[selec_activity].getDate() + "," + \
-                       activities[selec_activity].getTypeRun() + "," + \
-                       activities[selec_activity].getDistance() + "," + \
-                       activities[selec_activity].getTime() + "," + \
-                       str(activities[selec_activity].getPace()) + "," + \
-                       str(activities[selec_activity].getAverageSpeed())
+                line = activities[selec_activity].date + "," + \
+                       activities[selec_activity].typerun + "," + \
+                       activities[selec_activity].distance + "," + \
+                       activities[selec_activity].time + "," + \
+                       str(activities[selec_activity].pace) + "," + \
+                       str(activities[selec_activity].average_speed)
                 print line
                 nline += 1
             else:
@@ -621,11 +556,11 @@ def modRunner(runner):
     """
     modified the runner instance selected and the file
     """
-    data = [runner[0].getName(), 
-            runner[0].getAge(), 
-            runner[0].getWeight(), 
-            runner[0].getSex(), 
-            runner[0].getPref()]
+    data = [runner[0].name, 
+            runner[0].age, 
+            runner[0].weight, 
+            runner[0].sex, 
+            runner[0].pref]
     
     for item in data:
         print "{0:^3} : {1:^3}".format(data.index(item), item)
@@ -635,19 +570,19 @@ def modRunner(runner):
 
         if selec_data == "0":
             new_data = raw_input("Introduce the new Name: ")
-            runner[0].setName(new_data)
+            runner[0].name = new_data
             break
         elif selec_data == "1":
             new_data = raw_input("Introduce the new Age: ")
-            runner[0].setAge(new_data)
+            runner[0].age = new_data
             break
         elif selec_data == "2":
             new_data = raw_input("Introduce the new Weight: ")
-            runner[0].setWeight(new_data)
+            runner[0].weight = new_data
             break
         elif selec_data == "3":
             new_data = raw_input("Introduce the new Sex: ")
-            runner[0].setSex(new_data)
+            runner[0].sex = new_data
             break
         elif selec_data == "4":
             while True:
@@ -656,7 +591,7 @@ def modRunner(runner):
                         print "Just '0' or '1'"
                         pass                        
                 break
-            runner[0].setPref(new_data)
+            runner[0].pref = new_data
             break
         elif selec_data in ["c", "C"]:
             return
@@ -666,11 +601,11 @@ def modRunner(runner):
     nline = 0
     for line in fileinput.input(runner[-1], inplace=True, mode="rb"):
         if nline == 0:
-            line = runner[0].getName() + "," + \
-                    runner[0].getAge() + "," + \
-                    runner[0].getWeight() + "," + \
-                    runner[0].getSex() + "," + \
-                    str(runner[0].getPref())
+            line = runner[0].name + "," + \
+                    runner[0].age + "," + \
+                    runner[0].weight + "," + \
+                    runner[0].sex + "," + \
+                    str(runner[0].pref)
             print line
             nline += 1
         else:
@@ -706,7 +641,7 @@ An app to keep the tracks of your times in running...
     sleep(1)
     print "LogIn...\n"
     runner = selectRunner(runners)
-    print runner[0].getTotalRuns()
+    print runner[0].totalruns
     setExtraInfo(runner)
     showData(runner)
     activities_list = loadActivity(runner)

@@ -1,8 +1,36 @@
 import os
-import csv
+# import csv
 import fileinput
+import sqlite3
 from xml.etree import ElementTree
 from math import radians, cos, sin, asin, sqrt
+
+
+# get coneccion with db
+conn = sqlite3.Connection("runner.db")
+cur = conn.cursor()
+
+#excecute 
+cur.execute("""create table runner (
+name text(50),
+age integer(2))""")
+cur.execute('insert into runner values ("koxmoz","2")')
+
+# get data
+a = cur.execute("""select * from runner""")
+for row in a.fetchall():
+    name, age = row
+    print name, age
+
+# close and commit
+cur.close()
+conn.commit()
+conn.close()
+
+# define variables froma a list
+z = (1, 2, 3)
+a, b, c = z
+print a, b, c
 
 with open('gradual.gpx', 'rt') as f:
     tree = ElementTree.parse(f)
@@ -11,7 +39,7 @@ for item in tree.getiterator():
     if "trkpt" in item.__str__():
         print item    
 
-#funciona igual con el time
+# funciona igual con el time
 for item in tree.getiterator():
     if "ele" in item.__str__():
         item.text
@@ -41,7 +69,7 @@ def haversine(lon1, lat1, lon2, lat2):
     km = 6367 * c
     # in miles
     ml = 3956 * c
-    return km 
+    return km, ml
 
 c = 0
 # remplace a data from a line
