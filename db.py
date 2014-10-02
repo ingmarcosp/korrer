@@ -17,7 +17,7 @@ Create a list of Runners and Activities,
 import sqlite3
 from os import listdir
 
-class dblite(object):
+class Dblite(object):
     def __init__(self):
         self.dbfile = "data.db"
         self.dbcheck = self.checking()
@@ -42,9 +42,11 @@ class dblite(object):
             cur.execute(""" CREATE TABLE ACTIVITY (
 					ID_A	    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 					date	    DATETIME,
-					type	    TEXT(1),
+					typerun	    TEXT(1),
 					distance INTEGER,
 					time	    DATETIME,
+                         pace     INTEGER,
+                         speed    INTEGER,
 					ID	    INTEGER NOT NULL,
                          FOREIGN KEY(ID) REFERENCES RUNNER(ID)
                          )
@@ -80,17 +82,17 @@ class dblite(object):
         conn.close()
         return
 
-    def update_profile(self, data_list):
+    def upgrade_profile(self, data_list):
         ID, name, age, weight, sex, pref = data_list
         
         conn = sqlite3.Connection("data.db")
         cur = conn.cursor()
         cur.execute("UPDATE RUNNER SET name='%s', \
                                        age='%s', \
-                                       weight='%s' \
+                                       weight='%s', \
                                        sex='%s', \
                                        pref='%s' \
-                                       WHERE ID= %S" %\
+                                       WHERE ID='%s'" %\
                                        (name, age, weight, sex, pref, ID))
         conn.commit()
         cur.close()
@@ -100,14 +102,26 @@ class dblite(object):
         self.read_profiles()
         return
     
+    def delete_profile(self, ID):
+        conn = sqlite3.Connection("data.db")
+        cur = conn.cursor()
+        cur.execute("DELETE FROM RUNNER WHERE ID= %s" % (ID))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        self.runners = []
+        self.read_profiles()
+        return
+    
     def insert_new_activity(self, data_list):
-        date, typerun, distance, time, runner_ID = data_list
+        date, typerun, distance, time, pace, speed, runner_ID = data_list
 
         conn = sqlite3.Connection("data.db")
         cur = conn.cursor()
         cur.execute("INSERT INTO ACTIVITY VALUES\
-                    (null, '%s', '%s', '%s', '%s', '%s')" %\
-                         (date, typerun, distance, time, runner_ID))
+                    (null, '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %\
+                       (date, typerun, distance, time, pace, speed, runner_ID))
         conn.commit()
         cur.close()
         conn.close()
@@ -131,47 +145,61 @@ class dblite(object):
         return
 
     def upgrade_activity(self, data_list):
-        ID_A, date, typerun, distance, time, runner = data_list
+        ID_A, date, typerun, distance, time, pace, speed, runner = data_list
         
         conn = sqlite3.Connection("data.db")
         cur = conn.cursor()
-        cur.execute("UPDATE RUNNER SET date='%s', \
+        cur.execute("UPDATE ACTIVITY SET date='%s', \
                                        typerun='%s', \
-                                       distance='%s' \
+                                       distance='%s', \
                                        time='%s', \
-                                       WHERE ID_A= %S" %\
-                                       (date, typerun, distance, time, ID_A))
+                                       pace='%s', \
+                                       speed='%s' \
+                                       WHERE ID_A='%s'" %\
+                                       (date, typerun, distance, time, pace, speed, ID_A))
         conn.commit()
         cur.close()
         conn.close()
     
         self.activities = []    
-        self.read_activities()
+        self.read_activities(runner)
         pass
+
+    def delete_activity(self, ID_A, runner):
+        conn = sqlite3.Connection("data.db")
+        cur = conn.cursor()
+        cur.execute("DELETE FROM ACTIVITY WHERE ID_A= %s" % (ID_A))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        self.activities = []
+        self.read_activities(runner)
+        return
     
     
-print "testing"
-print "·" * 10
-print "testing runner"
-db = dblite()
-db.insert_new_runner(["kox", "25", "78", "male", "1"])
-db.insert_new_runner(["moz", "19", "90", "male", "1"])
-db.read_profiles()
-
-print db.runners
-print "·" * 10
-for x in db.runners:
-    print x
-
-print "·" * 10
-print "testing activities"
-db.insert_new_activity(["03-12-14", "R", "10", "00:40:00", "1"])
-db.insert_new_activity(["03-12-14", "R", "5", "00:20:00", "1"])
-db.read_activities("1")
-
-for x in db.activities:
-    print x
-    
-print "end"
+#print "testing"
+#print "·" * 10
+#print "testing runner"
+#db = Dblite()
+#db.insert_new_runner(["kox", "25", "78", "male", "1"])
+#db.insert_new_runner(["moz", "19", "90", "male", "1"])
+#db.read_profiles()
+#
+#print db.runners
+#print "·" * 10
+#for x in db.runners:
+#    print x
+#
+#print "·" * 10
+#print "testing activities"
+#db.insert_new_activity(["03-12-14", "R", "10", "00:40:00", "1"])
+#db.insert_new_activity(["03-12-14", "R", "5", "00:20:00", "1"])
+#db.read_activities("1")
+#
+#for x in db.activities:
+#    print x
+#    
+#print "end"
 
 

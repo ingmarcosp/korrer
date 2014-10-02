@@ -12,10 +12,12 @@ from os import listdir
 
 GPX_FILE = "gpxfiles/"
 
+
 class GpxData(object):
     def __init__(self, afile_dir):
         self.RawData = {"lat": [], "lon": [], "ele": [], "time": []}
-        self.TInfo = {"tdistance": None, "ttime": None, "date": None}
+        self.TInfo = {"tdistance": None, "ttime": None, "date": None, 
+                      "pace": None, "speed": None}
         self.afile_dir = afile_dir
     
     def setRawData(self, key, value):
@@ -113,6 +115,19 @@ class GpxData(object):
         # set date
         date = self.RawData["time"][0].replace("Z", "").split("T")[0]
         self.setTInfo("date", date)
+        return
+    
+    def pace_and_speed(self, pref):
+        """
+        sets pace and average speed. need the preferences of the runner to
+        select the correct distance.
+        """
+        time = [float(x) for x in self.TInfo["ttime"].split(":")]
+        time = datetime.timedelta(hours=time[0], minutes=time[1], \
+                                  seconds=time[2])
+        self.TInfo["pace"] = round((time.total_seconds() / 60) / float(self.TInfo["tdistance"][pref]), 2)
+        self.TInfo["speed"] = round(float(self.TInfo["tdistance"][pref]) / (time.total_seconds() / 3600), 2)
+        return
 
 def readgpxfiles():
     """ 
