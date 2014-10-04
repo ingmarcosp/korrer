@@ -3,15 +3,19 @@
 Created on Sat Aug 16 11:12:51 2014
 
 @author: koxmoz
+
+This program is GPL v3, read the LICENSE file.
 """
 
 import datetime
 from time import sleep
-from gpx import *
-from db import *
+from gpx import Gpx_Data, read_gpx_files
+from db import db_lite
 
 # import readline
-DB = Dblite()
+DB = db_lite()
+
+
 class Runner(object):
     """
     runner profile
@@ -30,44 +34,50 @@ class Runner(object):
 
 
 class Activity(object):
-    def __init__(self, ID_A, date, typerun, distance, time, runner):
-        self.ID_A = ID_A
+    """
+    it's an instance of the activity in the database, id_a it's de 'ID of the
+    activit' while runner it's the runner ID in the database
+    """
+    def __init__(self, id_a, date, typerun, distance, time, runner):
+        self.id_a = id_a
         self.date = date
         self.typerun = typerun
         self.distance = distance
         self.time = time
-        self.runner = runner # ID runner
+        self.runner = runner  # ID runner
         self.pace = None
         self.average_speed = None
-    
-    def setP_and_AS(self):
+
+    def pace_and_speed(self):
         """
-        sets pace and average speed for manual entry, for gpx entry use the moduel
+        sets pace and average speed for manual entry, for gpx entry use the
+        moduel
         """
         time = [float(x) for x in self.time.split(":")]
-        time = datetime.timedelta(hours=time[0], minutes=time[1], \
+        time = datetime.timedelta(hours=time[0], minutes=time[1],
                                   seconds=time[2])
-        self.pace = round((time.total_seconds() / 60) / float(self.distance), 2)
+        self.pace = round((time.total_seconds() / 60) / float(self.distance),
+                          2)  # round 2 decimals
         self.average_speed = round(float(self.distance) / (time.total_seconds() / 3600), 2)
-        
-def loadRunners():
+
+
+def load_runners():
     """
     load an instance of runner class for each profile in the database
     """
     DB.read_profiles()
     profiles = []
-    
+
     for runner in DB.runners:
-        ID, name, age, weight, sex, pref = runner
-        profiles.append(Runner(ID, name, age, weight, sex, pref))
-        
+        runner_id, name, age, weight, sex, pref = runner
+        profiles.append(Runner(runner_id, name, age, weight, sex, pref))
+
     return profiles
 
 
-def newRunner():
+def new_runner():
     """
     This function create a new runner
-    
     """
     name = raw_input("Please write your name: ")
     age = raw_input("Write your age: ")
@@ -75,15 +85,15 @@ def newRunner():
     sex = raw_input("Write your sex (male or female): ")
     preference = 2
     while preference > 1:
-        preference = int(raw_input("Write 0 (zero) for 'mi and lb' or"\
-            + " 1 (one) for 'km and kg': "))
+        preference = int(raw_input("Write 0 (zero) for 'mi and lb' or"
+                                   + " 1 (one) for 'km and kg': "))
     print "\n"
 
     DB.insert_new_runner([name, age, weight, sex, str(preference)])
-    return 
+    return
 
 
-def selectRunner(profiles):
+def select_runner(profiles):
     """
     Show the Runners (instanced) and the option to add a new runner, the user
     choice by a number...
@@ -104,30 +114,30 @@ def selectRunner(profiles):
             print "just Numbers...\n"
     # option new Runner
     if runner == 0:
-        newRunner()
-        return selectRunner(loadRunners())
+        new_runner()
+        return select_runner(load_runners())
     # else selected runner
-    return profiles[runner -1]
+    return profiles[runner - 1]
 
 
-def setExtraInfo(profile):
+def set_extra_info(profile):
     """
     Set the extras attributes to the instance of the selected runner
     """
     DB.read_activities(profile.ID)
     runs = DB.activities[:]
-    #set total runs
+    # set total runs
     profile.totalruns = len(runs)
-    
+
     if profile.totalruns > 0:
-        ## setting up total distance
+        # setting up total distance
         totaldistance = []
         for run in runs:
             totaldistance.append(float(run[3]))
-            
+
         profile.totaldistance = sum(totaldistance)
-    
-        ## setting up the total time
+
+        # setting up the total time
         # set totaltime in 0
         totaltime = datetime.timedelta()
         for run in runs:
@@ -136,14 +146,14 @@ def setExtraInfo(profile):
             # convert to a float number each element
             time = [float(t) for t in time]
             # add to total time the time of the run
-            totaltime = totaltime + datetime.timedelta(hours=time[0], \
-                                                       minutes=time[1], \
+            totaltime = totaltime + datetime.timedelta(hours=time[0],
+                                                       minutes=time[1],
                                                        seconds=time[2])
-        # the __str__() is becouse time is in seconds, and in this way 
+        # the __str__() is becouse time is in seconds, and in this way
         # return hh:mm:ss.ms
         profile.totaltime = totaltime.__str__()
-        
-        ## set fasted run
+
+        # set fasted run
         speed = 0
         for run in runs:
             if float(run[6]) > speed:
@@ -157,92 +167,91 @@ def setExtraInfo(profile):
     return
 
 
-def showData(runner):
+def show_data(runner):
     """
     print the screen presentation
     """
-    
+
     print '{0:<16} {1:^16} {2:>16}'.format("#" * 12, "Welcome..!", "#" * 12)
-    print '{0:<16} {1:^16} {2:>16}'.format("#" * 12, \
+    print '{0:<16} {1:^16} {2:>16}'.format("#" * 12,
                                            runner.name, "#" * 12)
     print ""
     print '{0:<16} {1:^16} {2:>16}'.format(" "*10, "#"*10, " "*10)
     print ""
-    print '{0:<16} {1:^16} {2:>16}'.format(\
-                                    ("Age: " + str(runner.age)),\
-                                    ("Weight: " + str(runner.weight)),\
-                                    ("Sex: " + runner.sex))
-    print '{0:<16} {1:^16} {2:>16}'.format(\
-                                    ("Total Distance :" + \
-                                     str(runner.totaldistance)),\
-                                  ("Total Time: " + str(runner.totaltime)),\
-                                  ("Total Runs: " + str(runner.totalruns)))
-    print '{0:<16} {1:^16} {2:>16}'.format(" "*10, \
-                                   "Fasted Run: " + str(runner.fastedrun), \
-                                   " "*10)
+    print '{0:<16} {1:^16} {2:>16}'.format(
+        ("Age: " + str(runner.age)),
+        ("Weight: " + str(runner.weight)),
+        ("Sex: " + runner.sex))
+    print '{0:<16} {1:^16} {2:>16}'.format(
+        ("Total Distance :" + str(runner.totaldistance)),
+        ("Total Time: " + str(runner.totaltime)),
+        ("Total Runs: " + str(runner.totalruns)))
+    print '{0:<16} {1:^16} {2:>16}'.format(" "*10,
+                                        "Fasted Run: " + str(runner.fastedrun),
+                                           " "*10)
     print ""
     return
 
 
-def loadActivity(runner):
+def load_activity(runner):
     """
     return a list of istanced activity
     """
     DB.read_activities(runner.ID)
     activities = []
-    
+
     # making an instance of each activity
     for activity in DB.activities:
-        activities.append(Activity(activity[0], \
-                                   activity[1], \
-                                   activity[2], \
-                                   activity[3], \
-                                   activity[4], \
+        activities.append(Activity(activity[0],
+                                   activity[1],
+                                   activity[2],
+                                   activity[3],
+                                   activity[4],
                                    activity[7]))
     # return the list
     return activities
 
 
-def listActivities(activities, header=True):
+def list_activities(activities, header=True):
     """
     Print out the list of activities. If header is false, dont print it out.
     """
 
     if header:
         print ""
-        print '{0:^10}|{1:^10}|{2:^10}|{3:^10}|{4:^10}|{5:^10}|{6:^10}'.format( 
-                                                "Number", 
-                                                "Date", 
-                                                "Type Run", 
-                                                "Distance",
-                                                "Time", 
-                                                "Pace", 
-                                                "Avg. Speed")
+        print '{0:^10}|{1:^10}|{2:^10}|{3:^10}|{4:^10}|{5:^10}|{6:^10}'.format(
+            "Number",
+            "Date",
+            "Type Run",
+            "Distance",
+            "Time",
+            "Pace",
+            "Avg. Speed")
     if len(activities) > 0:
         for activity in activities:
             activity.setP_and_AS()
             print '{0:^10}|{1:^10}|{2:^10}|{3:^10}|{4:^10}|{5:^10}|{6:^10}'.format(
-                                                    activities.index(activity), 
-                                                    activity.date, 
-                                                    activity.typerun, 
-                                                    activity.distance, 
-                                                    activity.time, 
-                                                    activity.pace, 
-                                                    activity.average_speed)
+                activities.index(activity),
+                activity.date,
+                activity.typerun,
+                activity.distance,
+                activity.time,
+                activity.pace,
+                activity.average_speed)
             print "{0:^3} : {1:^3}".format("c", "Back to main menu")
     else:
         print "No activities yet..."
     return
 
 
-def timeInput():
+def time_input():
     """
     return a string like this "hh:mm:ss"
     """
     # get the time info
     while True:
-        time = [raw_input("Introduce the hours: "), 
-                raw_input("introduce the minutes: "), 
+        time = [raw_input("Introduce the hours: "),
+                raw_input("introduce the minutes: "),
                 raw_input("introduce the secods: ")
                 ]
         # in case a null imput
@@ -266,8 +275,11 @@ def timeInput():
     return time
 
 
-def newGpxActivity(runner, activities):
-    gpxfiles = readgpxfiles()
+def new_gpx_activity(runner, activities):
+    """
+    create an activity from a GPX file
+    """
+    gpxfiles = read_gpx_files()
     if len(gpxfiles) == 0:
         print "You must copy your gpx files in the folder 'gpxfiles/'"
         return activities
@@ -276,90 +288,92 @@ def newGpxActivity(runner, activities):
     print ""
     for gfile in gpxfiles:
         # cut of the "gpxfiles/" to get the simple file name
-        print "{0:^3} : {1:^3}".format(gpxfiles.index(gfile), 
+        print "{0:^3} : {1:^3}".format(gpxfiles.index(gfile),
                                        gfile.replace("gpxfiles/", ""))
     while True:
         try:
-            select_option = int(raw_input("Introduce the number of the file: "))
+            select_option = int(raw_input("Introduce the number of the file: ")
+                                )
             if select_option > len(gpxfiles):
-                print "The Number sould be less than " + str(select_option) 
+                print "The Number sould be less than " + str(select_option)
                 pass
         except ValueError:
             print "Just Numbers..."
             pass
         break
 
-    gpxactivity = GpxData(gpxfiles[select_option])
-    gpxactivity.gpxParse()
-    gpxactivity.totalDistance()
-    gpxactivity.timeDate()
+    gpxactivity = Gpx_Data(gpxfiles[select_option])
+    gpxactivity.gpx_parse()
+    gpxactivity.total_distance()
+    gpxactivity.time_date()
     gpxactivity.pace_and_speed(runner.pref)
-    pref = int(runner.pref) # 0 for miles and 1 for kilometers
+    pref = int(runner.pref)  # 0 for miles and 1 for kilometers
     # save the new activity in the database
-    DB.insert_new_activity([gpxactivity.getTInfo("date"), 
+    DB.insert_new_activity([gpxactivity.gettotal_info("date"),
                            "R",
-                           gpxactivity.getTInfo("tdistance")[pref], 
-                           gpxactivity.getTInfo("ttime"), 
-                           gpxactivity.getTInfo("pace"), 
-                           gpxactivity.getTInfo("speed"), 
-                           runner.ID])
+                            gpxactivity.gettotal_info("tdistance")[pref],
+                            gpxactivity.gettotal_info("ttime"),
+                            gpxactivity.gettotal_info("pace"),
+                            gpxactivity.gettotal_info("speed"),
+                            runner.ID])
     DB.read_activities(runner.ID)
     # variables for the new (and last) instace from the database
-    ID_A, date, typerun, distance, time, pace, speed, runner_ID = DB.activities[-1]
-    newactivity = Activity(ID_A, date, typerun, distance, time, runner_ID)
-    newactivity.setP_and_AS()
+    id_a, date, typerun, distance, time, pace, speed, runner_id = DB.activities[-1]
+    activity_new = Activity(id_a, date, typerun, distance, time, runner_id)
+    activity_new.pace_and_speed()
 
-    activities.append(newactivity)
+    activities.append(activity_new)
     return activities
 
 
-def newActivity(runner, activities):
+def new_activity(runner, activities):
     """
     Creates a new activity, append to the end of the file, instances and append
     to the list activities.
     Return activities list updated
     """
-    ID_A = len(activities)
+    id_a = len(activities)
     date = raw_input("Introduce the date (dd/mm/yy): ")
-    typerun = raw_input("Introduce the activity type 'R' for a race or 'T' for a trining session: ")
+    typerun = raw_input("Introduce the activity type 'R' for a race or 'T' \
+                        for a trining session: ")
     distance = raw_input("Introduce the distance: ")
-    time = timeInput() #function to input time
+    time = time_input()  # function to input time
     # new instance
-    newactivity = Activity(ID_A, date, typerun, distance, time, runner.ID)
+    activity_new = Activity(id_a, date, typerun, distance, time, runner.ID)
 
     print "{:^}".format("=" * 20)
-    listActivities([newactivity])
-    
+    list_activities([activity_new])
+
     # ask for confirmation, write the file if it's yes, if it's no makes a
     # recursive call, otherwise ask again.
     while True:
-        isOkk= raw_input("Is this information is ok? (yes or no): ")
-        if isOkk == "yes": 
-            newactivity.setP_and_AS()
-            DB.insert_new_activity([newactivity.date,
-                                    newactivity.typerun,
-                                    newactivity.distance,
-                                    newactivity.time,
-                                    newactivity.pace,
-                                    newactivity.average_speed,
-                                    newactivity.runner
+        is_okk = raw_input("Is this information is ok? (yes or no): ")
+        if is_okk == "yes":
+            activity_new.pace_and_speed()
+            DB.insert_new_activity([activity_new.date,
+                                    activity_new.typerun,
+                                    activity_new.distance,
+                                    activity_new.time,
+                                    activity_new.pace,
+                                    activity_new.average_speed,
+                                    activity_new.runner
                                     ])
-            break # close the loop
-        elif isOkk == "no":
-            return newActivity(runner, activities)
+            break  # close the loop
+        elif is_okk == "no":
+            return new_activity(runner, activities)
         else:
             print "Just 'yes' or 'no'."
-    activities.append(newactivity)
+    activities.append(new_activity)
     return activities
 
 
-def modActivity(runner, activities):
+def mod_activity(runner, activities):
     """
     get an activity and mod the a data in the instance and DataBase
-    
+
     retruns an activites list moded
     """
-    listActivities(activities)
+    list_activities(activities)
     data_mod = ["Date", "Type", "Distance", "Time"]
     # loop to ask again if introduces a bad answer
     while True:
@@ -367,42 +381,44 @@ def modActivity(runner, activities):
         if selec_activity in ["C", "c"]:
             return activities
         else:
-            try:    
-                selec_activity = int(selec_activity) 
+            try:
+                selec_activity = int(selec_activity)
             # In case introduce a wron string
-            except ValueError: 
+            except ValueError:
                 print "Just Numbers from '0' to " + str(len(activities))
 
             if selec_activity > len(activities):
                 pass
             else:
-                actual_data= [activities[selec_activity].date, 
-                              activities[selec_activity].typerun, 
-                              activities[selec_activity].distance, 
-                              activities[selec_activity].time]
-    
+                actual_data = [activities[selec_activity].date,
+                               activities[selec_activity].typerun,
+                               activities[selec_activity].distance,
+                               activities[selec_activity].time]
+
                 # Print a list of type data and data
                 for adata in actual_data:
                     index = actual_data.index(adata)
-                    print "{0:^5} {1:^5} {2:^5}".format(index, data_mod[index], adata)
+                    print "{0:^5} {1:^5} {2:^5}".format(index, data_mod[index],
+                                                        adata)
                 # loop to ask again if introduces a bad answer
                 while True:
-                    selec_data = raw_input("Introduce the number of the data: ")
-                    if selec_data == "0":
+                    selec_data = raw_input("Introduce the number of the \
+                                            data: ")
+                    if selec_data is "0":
                         new_data = raw_input("Introduce the new Date: ")
                         activities[selec_activity].date = new_data
                         break
-                    elif selec_data == "1":
+                    elif selec_data is "1":
                         new_data = raw_input("Introduce the new Type Run: ")
                         activities[selec_activity].typerun = new_data
                         break
-                    elif selec_data == "2":
+                    elif selec_data is "2":
                         new_data = raw_input("Introduce the new Distance: ")
                         activities[selec_activity].distance = new_data
                         activities[selec_activity].setP_and_AS()
                         break
-                    elif selec_data == "3":
-                        time = timeInput()
+                    elif selec_data is "3":
+                        time = time_input()
                         activities[selec_activity].time = time
                         activities[selec_activity].setP_and_AS()
                         break
@@ -411,23 +427,23 @@ def modActivity(runner, activities):
                         print "Just Numbers from '0' to '3'..."
         break
     # upgrade the database
-    DB.upgrade_activity([activities[selec_activity].ID_A, 
-                        activities[selec_activity].date, 
-                        activities[selec_activity].typerun, 
-                        activities[selec_activity].distance, 
-                        activities[selec_activity].time, 
-                        activities[selec_activity].pace,
-                        activities[selec_activity].average_speed,
-                        activities[selec_activity].runner])
-    #return the activites list
+    DB.upgrade_activity([activities[selec_activity].id_a,
+                         activities[selec_activity].date,
+                         activities[selec_activity].typerun,
+                         activities[selec_activity].distance,
+                         activities[selec_activity].time,
+                         activities[selec_activity].pace,
+                         activities[selec_activity].average_speed,
+                         activities[selec_activity].runner])
+    # return the activites list
     return activities
 
 
-def delActivity(runner, activities):
+def del_activity(runner, activities):
     """
     select the activity to delete
     """
-    listActivities(activities)
+    list_activities(activities)
     while True:
         select_activity = raw_input("Introduce the number of the activity: ")
         if select_activity in ["C", "c"]:
@@ -441,51 +457,52 @@ def delActivity(runner, activities):
                 print "Just Numbers from '0' to " + str(len(activities))
                 pass
         break
-    DB.delete_activity(activities[select_activity].ID_A, runner.ID)
+    DB.delete_activity(activities[select_activity].id_a, runner.ID)
     activities.remove(activities[select_activity])
     return activities
 
 
-def modRunner(runner):
+def mod_runner(runner):
     """
     modified the runner instance selected and the database
     """
-    data = [runner.name, 
-            runner.age, 
-            runner.weight, 
-            runner.sex, 
+    data = [runner.name,
+            runner.age,
+            runner.weight,
+            runner.sex,
             runner.pref]
-    
+
     for item in data:
         print "{0:^3} : {1:^3}".format(data.index(item), item)
     print "{0:^3} : {1:^3}".format("c", "Back to main menu")
     while True:
         selec_data = raw_input("Introduce the Number: ")
 
-        if selec_data == "0":
+        if selec_data is "0":
             new_data = raw_input("Introduce the new Name: ")
             runner.name = new_data
             break
-        elif selec_data == "1":
+        elif selec_data is "1":
             new_data = raw_input("Introduce the new Age: ")
             runner.age = new_data
             break
-        elif selec_data == "2":
+        elif selec_data is "2":
             new_data = raw_input("Introduce the new Weight: ")
             runner.weight = new_data
             break
-        elif selec_data == "3":
+        elif selec_data is "3":
             new_data = raw_input("Introduce the new Sex: ")
             runner.sex = new_data
             break
-        elif selec_data == "4":
+        elif selec_data is "4":
             while True:
-                new_data = raw_input("Introduce the new Preference '0' or '1': ")
+                new_data = raw_input("Introduce the new Preference \
+                                     '0' or '1': ")
                 if new_data not in ["1", "0"]:
-                        print "Just '0' or '1'"
-                        pass                        
+                    print "Just '0' or '1'"
+                    pass
                 break
-            runner[0].pref = new_data
+            runner.pref = new_data
             break
         elif selec_data in ["c", "C"]:
             return
@@ -493,12 +510,12 @@ def modRunner(runner):
             print "Just Number from '0' to '4'...\n"
 
     # upgrade database
-    DB.upgrade_profile([runner.ID, runner.name, runner.age, 
-                       runner.weight, runner.sex, runner.pref])
+    DB.upgrade_profile([runner.ID, runner.name, runner.age,
+                        runner.weight, runner.sex, runner.pref])
     return
 
 
-def mainAction():
+def main_action():
     """
     Start the program, give th welcome and show the options to select or
     create a new runner.
@@ -509,28 +526,28 @@ Welcome to...
                  KORRER
 
 An app to keep the tracks of your times in running...
-        
+
     """
     sleep(1)
     print "Loading the runners profiles...\n"
     sleep(1)
-    runners = loadRunners()
-    if len(runners) == 0:
+    runners = load_runners()
+    if len(runners) is 0:
         print "Is this your first time?"
-        newRunner()
-        runners = loadRunners()
-        
+        new_runner()
+        runners = load_runners()
+
     sleep(1)
     print "LogIn...\n"
-    runner = selectRunner(runners)
-    setExtraInfo(runner)
-    showData(runner)
-    activities_list = loadActivity(runner)
-    
+    runner = select_runner(runners)
+    set_extra_info(runner)
+    show_data(runner)
+    activities_list = load_activity(runner)
+
     options = ["View Activities", "Add New Activity", "Modefy an Activity",
                "Delete an Activity", "Configuration", "Exit"]
 
-    # something like a main loop??    
+    # something like a main loop??
     while True:
         sleep(1)
         print ""
@@ -542,31 +559,31 @@ An app to keep the tracks of your times in running...
         selec_option = raw_input("Whats you wants to do? (option Number): ")
         print "=" * 15
         print ""
-        if selec_option == "0":
-            listActivities(activities_list)
-        elif selec_option == "1":
+        if selec_option is "0":
+            list_activities(activities_list)
+        elif selec_option is "1":
             while True:
                 print "{0:^3} : {1:^3}".format("0", "Manual Entry")
                 print "{0:^3} : {1:^3}".format("1", "GPX File")
                 print "{0:^3} : {1:^3}".format("c", "Back to main menu")
                 selec_option = raw_input("(option Number): ")
-                if selec_option == "0":
-                    activities_list = newActivity(runner, activities_list)
+                if selec_option is "0":
+                    activities_list = new_activity(runner, activities_list)
                     break
-                elif selec_option == "1":
-                    activities_list = newGpxActivity(runner, activities_list)
+                elif selec_option is "1":
+                    activities_list = new_gpx_activity(runner, activities_list)
                     break
                 elif selec_option in ["c", "C"]:
                     break
                 else:
                     print "wron option"
-        elif selec_option == "2":
-            activities_list = modActivity(runner, activities_list)
-        elif selec_option == "3":
-            activities_list = delActivity(runner, activities_list)
-        elif selec_option == "4":
-            modRunner(runner)
-        elif selec_option == "5":
+        elif selec_option is "2":
+            activities_list = mod_activity(runner, activities_list)
+        elif selec_option is "3":
+            activities_list = del_activity(runner, activities_list)
+        elif selec_option is "4":
+            mod_runner(runner)
+        elif selec_option is "5":
             print " Are you gonna run..?\n Have a nice Run!!!"
             break
         else:
@@ -575,6 +592,6 @@ An app to keep the tracks of your times in running...
 
 if __name__ == '__main__':
     try:
-        mainAction()
+        main_action()
     except (KeyboardInterrupt, SystemExit):
         pass
