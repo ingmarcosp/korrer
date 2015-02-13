@@ -27,10 +27,10 @@ class Runner(object):
         self.weight = weight
         self.sex = sex
         self.pref = preference
-        self.totaldistance = None
-        self.totaltime = None
-        self.totalruns = None
-        self.fastedrun = None
+        self.total_distance = None
+        self.total_time = None
+        self.total_runs = None
+        self.faster_run = None
 
 
 class Activity(object):
@@ -127,43 +127,43 @@ def set_extra_info(profile):
     DB.read_activities(profile.ID)
     runs = DB.activities[:]
     # set total runs
-    profile.totalruns = len(runs)
+    profile.total_runs = len(runs)
 
-    if profile.totalruns > 0:
+    if profile.total_runs > 0:
         # setting up total distance
-        totaldistance = []
+        total_distance = []
         for run in runs:
-            totaldistance.append(float(run[3]))
+            total_distance.append(float(run[3]))
 
-        profile.totaldistance = sum(totaldistance)
+        profile.total_distance = sum(total_distance)
 
         # setting up the total time
-        # set totaltime in 0
-        totaltime = datetime.timedelta()
+        # set total_time in 0
+        total_time = datetime.timedelta()
         for run in runs:
             # split the string into a list
             time = run[4].split(":")
             # convert to a float number each element
             time = [float(t) for t in time]
             # add to total time the time of the run
-            totaltime = totaltime + datetime.timedelta(hours=time[0],
+            total_time = total_time + datetime.timedelta(hours=time[0],
                                                        minutes=time[1],
                                                        seconds=time[2])
         # the __str__() is becouse time is in seconds, and in this way
         # return hh:mm:ss.ms
-        profile.totaltime = totaltime.__str__()
+        profile.total_time = total_time.__str__()
 
         # set fasted run
         speed = 0
         for run in runs:
             if float(run[6]) > speed:
-                profile.fastedrun = run[1]
+                profile.faster_run = run[1]
                 speed = run[6]
     else:
-        profile.totaldistance = 0
-        profile.totaltime = datetime.timedelta().__str__()
-        profile.totalruns = 0
-        profile.fastedrun = 0
+        profile.total_distance = 0
+        profile.total_time = datetime.timedelta().__str__()
+        profile.total_runs = 0
+        profile.faster_run = 0
     return
 
 
@@ -183,11 +183,11 @@ def show_data(runner):
         ("Weight: " + str(runner.weight)),
         ("Sex: " + runner.sex))
     print '{0:<16} {1:^16} {2:>16}'.format(
-        ("Total Distance :" + str(runner.totaldistance)),
-        ("Total Time: " + str(runner.totaltime)),
-        ("Total Runs: " + str(runner.totalruns)))
+        ("Total Distance :" + str(runner.total_distance)),
+        ("Total Time: " + str(runner.total_time)),
+        ("Total Runs: " + str(runner.total_runs)))
     print '{0:<16} {1:^16} {2:>16}'.format(" "*10,
-                                        "Fasted Run: " + str(runner.fastedrun),
+                                        "Fasted Run: " + str(runner.faster_run),
                                            " "*10)
     print ""
     return
